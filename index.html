@@ -1,594 +1,380 @@
-<!-- 
-Copyright 2021 Google LLC
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    https://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
--->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-  <title>Google Cloud region picker</title>
-  <link rel="canonical" href="https://cloud.withgoogle.com/region-picker/">
-
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Tool to help you pick a Google Cloud region considering carbon footprint, price and latency.">
-  <meta name="theme-color" content="#1c74e9">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Cloud Region Advisor | Enterprise Architecture Engine</title>
+  <meta name="description" content="Enterprise tool to optimize Google Cloud region placement considering carbon footprint, hourly compute pricing, and network latency.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌐</text></svg>">
 
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗺️</text></svg>">
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
-  <!-- pre-load resources -->
-  <link rel="modulepreload" href="region-optimizer.js">
-  <link rel="preload" as="fetch" crossorigin="anonymous" href="data/regions.json">
-  <link rel="preload" as="fetch" crossorigin="anonymous" href="data/countries.json">
-  <link rel="preload" as="fetch" crossorigin="anonymous" href="data/prices.json">
-  <!-- Carbon info is from GitHub Pages -->
-  <link rel="preconnect" href="https://googlecloudplatform.github.io/">
-  <!-- Flags are from wikipedia-->
-  <link rel="preconnect" href="https://upload.wikimedia.org">
-
-  <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="Google Cloud region picker">
-  <meta name="twitter:description" content="Tool to help you pick a Google Cloud region considering carbon footprint, price and latency.">
-  <meta name="twitter:image" content="https://cloud.withgoogle.com/region-picker/images/gcp-region-picker.png">
-
-  <meta property="og:type" content="profile">
-  <meta property="og:title" content="Google Cloud region picker">
-  <meta property="og:description" content="Tool to help you pick a Google Cloud region considering carbon footprint, price and latency.">
-  <meta property="og:url" content="https://cloud.withgoogle.com/region-picker">
-  <meta property="og:image" content="https://cloud.withgoogle.com/region-picker/images/gcp-region-picker.png">
-
-  <script>
-    // Serve either at the root of a domain name, or at a subpath with a trailing slash.
-    // Doesn't work at a subpath without a trailing slash (issue #7).
-    let p = window.location.pathname;
-    if( p.length>=1 && p.slice(-1) !== '/' && p.slice(-10) !== 'index.html' ) {
-      // Then redirect
-      window.location.href += '/';
-    }
-  </script>
-
-  <script type="application/ld+json">
-  {
-    "@context": "http://schema.org",
-    "@type": "SoftwareApplication",
-    "name": "Google Cloud region picker",
-    "abstract": "Tool to help you pick a Google Cloud region considering carbon footprint, price and latency.",
-    "url": "https://cloud.withgoogle.com/region-picker",
-    "image": "https://cloud.withgoogle.com/region-picker/images/gcp-region-picker.png"
-  }
-  </script>
-
-<style>
-/*
- * The following is manually copied from the stylesheet of the official Google Fonts API
- * https://fonts.googleapis.com/css2?family=Google+Sans:wght@400&display=optional 
- * It's unclear if it the src URL is stable.
- */
-@font-face {
-  font-family: 'Google Sans';
-  font-style: normal;
-  font-weight: 400;
-  /* Use optional if we do not tolerate any Layout shift */
-  /* font-display: optional; */
-  font-display: swap;
-  src: url(https://fonts.gstatic.com/s/googlesans/v27/4UaGrENHsxJlGDuGo1OIlL3Owp4.woff2) format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-
-:root {
-  --base-width: 35rem;
-  --base-unit: 24px;
-  --half-unit: calc(var(--base-unit) / 2);
-  --rounder-corner: 8px;
-  --blue-500: #1a73e8;
-  --shadow-card: 0px 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-html {
-  font-family: 'Google Sans', Arial, sans-serif;
-  line-height: 1.4;
-  height: 100%;
-  box-sizing: border-box;
-}
-
-*, *:before, *:after {
-  box-sizing: inherit;
-}
-
-h1, h2, h3 {
-  font-style: normal;
-  font-weight: normal;
-}
-
-h1{
-  font-size: 2.5em;
-}  
-h2{
-  font-size: 1.25em;
-}
-h3{
-  font-size: 1em;
-}
-
-
-h1 .accent, h2 {
-  color: var(--blue-500)
-} 
-
-a, a:visited, a:hover{
-  color:black;
-}
-a:hover, a:active{
-  outline-width:0;
-}
-
-body {
-  font-size: 1rem;
-  margin: 0;
-  flex-direction: column;
-  display: flex;
-  justify-content: space-between;
-  height: 100%;
-  align-items: stretch;
-}
-
-header {
-  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.05);
-  height: 80px; /** not so sure why I need to use such big height to get */
-  padding: var(--base-unit);
-
-  background-origin: content-box;
-  background-repeat: no-repeat; 
-  background-image: url(images/cloud-logo.svg);
-
-}
-
-main {
-  display: flex;
-  flex: 1 0;
-  flex-wrap: wrap;
-  justify-content: space-evenly;
-}
-
-footer {
-  background-color: #F1F3F4;
-  color: #5F6368;
-  font-size: 0.8rem;
-
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  padding: var(--base-unit);
-}
-
-.group {
-  width: 50%;
-  padding: var(--base-unit);
-}
-.group .content {
-  max-width: var(--base-width);
-  margin-left: auto;
-  margin-right: auto;
-}
-.group.regions {
-  background-color: var(--blue-500);
-}
-
-.group.regions,
-.group.regions h2 {
-  color: white;
-}
-
-#share {
-  opacity: 0;
-}
-
-select {
-  display:block;
-  width: 100%;
-  padding: calc(var(--base-unit) / 2) var(--base-unit);
-  border: none;
-  background-color: #F8F9FA;
-}
-label:not(:first-child){
-  margin-top:1em;
-}
-p label{
-  display:inline;
-}
-p label + label{
-  margin-left:1em;
-}
-select, input[type], textarea{
-  margin-bottom:1em;
-}
-input[type=checkbox], input[type=radio]{
-  margin-bottom:0;
-}
-input.weight {
-  width: calc(var(--base-width) / 2.5);
-}
-.zero {
-  opacity: 0.4;
-}
-
-button {
-  border: none;
-  background-color: transparent;
-}
-
-button.icon-button {
-  background-repeat: no-repeat; 
-  height: var(--base-unit);
-  width: var(--base-unit);
-  font-size: 0;
-}
-
-#share {
-  float: right;
-  background-image: url(images/icons/share-24px.svg);
-}
-
-.help {
-  width: 1em;
-  height: 1em;
-}
-
-/* 
- * Remove default styling for <details> tag.
- * See https://developer.mozilla.org/en-US/docs/Web/HTML/Element/details#customizing_the_disclosure_widget
- */
-details > summary {
-  list-style: none;
-}
-
-.explanation {
-  font-size: small;
-}
-
-.params {
-  box-shadow: var(--shadow-card);
-  border-radius: var(--rounder-corner);
-  background-color: white;
-  padding: calc(2*var(--base-unit));
-}
-
-.weight-info {
-    color: hsl(0 0% 50%)
-}
-
-.region-code {
-    font-family: monospace;
-}
-
-.weight-group {
-    background-repeat: no-repeat; 
-    padding-left: calc(24px + 6px);
-}
-
-.weight-group.carbon {
-    background-image: url(images/icons/gleaf_black_24dp.svg);
-}
-
-.weight-group.price {
-    background-image: url(images/icons/attach_money-24px.svg);
-}
-
-.weight-group.latency {
-    background-image: url(images/icons/timer-24px.svg);
-}
-
-.weight-group.products {
-    background-image: url(images/icons/checkbox-24px.svg);
-}
-
-#results {
-  padding: 0;
-  list-style-position: inside;
-}
-
-#results > li {
-  color: black;
-  background: #FFFFFF;
-  box-shadow: var(--shadow-card);
-  border-radius: var(--rounder-corner);
-  padding: var(--base-unit);
-  margin: var(--base-unit);
-  min-height: calc(6 * var(--base-unit));
-}
-
-#results.short li:nth-child(6),
-#results.short li:nth-child(7),
-#results.short li:nth-child(8),
-#results.short li:nth-child(9),
-#results.short li:nth-child(10) {
-  display: none;
-}
-
-#results > li details {
-  width: calc(100% - 2rem);
-  display: inline-flex;
-  cursor: pointer;
-}
-
-#results > li ul {
-  padding: 0;
-}
-
-#results > li summary {
-  display: inline-flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-#results > li .name-group {
-  display: inline-flex;
-  align-items: center;
-}
-
-#results > li .flag {
-  width: calc(2 * var(--base-unit));
-  height: calc(2 * var(--base-unit));
-  object-fit: contain;
-  margin: var(--base-unit);
-}
-
-#results > li .symbols {
-  width: calc(4 * var(--base-unit));
-}
-
-/* Show / Hide leaves or dollars*/
-#results > li .symbols.n0 img,
-#results > li .symbols.n1 img:nth-child(2),
-#results > li .symbols.n1 img:nth-child(3),
-#results > li .symbols.n2 img:nth-child(3) {
-  opacity: 0.1;
-}
-
-#more {
-  color: white;
-  margin: 0 auto;
-  display: block;
-  border-width: 1px;
-  border-style: solid;
-  border-radius: var(--rounder-corner);
-  padding: var(--half-unit);
-  width: 25%;
-}
-
-#missing-data-warning {
-  float: right;
-}
-
-#missing-data-regions span {
-  margin-right: 10px;
-}
-
-@media (max-width: 50rem) {
-  main {
-    display: block;
-  }
-
-  .params {
-    padding: var(--half-unit);
-  }
-  input[type=range] {
-    /** TODO: do not hardcode 6 */
-    width: calc(var(--base-width) / 6);
-  }
-  .group {
-    width: 100%;
-    margin-left: auto;
-    margin-right: auto;
-  }
-
-  .weight-info {
-    font-size: small;
-  }
-
-  #share {
-    display: block;
-    opacity: 100;
-  }
-
-  #results > li {
-    padding: var(--half-unit);
-    margin-left: auto;
-    margin-right: auto;
-    min-height: calc(3 * var(--base-unit));
-  }
-
-  #results > li .flag {
-    width: var(--base-unit);
-    height: var(--base-unit);
-    margin: var(--half-unit);
-  }
-
-  #results > li .symbols {
-    width: calc(2 * var(--base-unit));
-  }
-
-  #results > li .symbols img {
-    width: var(--half-unit);
-  }
-}
-</style>
-
+  <link rel="stylesheet" href="styles.css">
 </head>
-
 <body>
-<header>
-  <button class="icon-button" id="share">Share</button>
-</header>
 
-<main>
-<div class="group">
-  <div class="content">
-    <h1>
-      Google Cloud
-      <br/> 
-      <span class="accent">Region Picker</span>
-    </h1>
-    <p>This tool helps you pick a Google Cloud region considering approximated carbon footprint, price and latency.</p>
-    <p>This is not an officially supported Google product and does not cover all <a href="https://cloud.google.com/about/locations">Google Cloud locations</a>. Data last updated on 2025-07-28.</p>
-    <p>You can also use <a href="https://cloud.google.com/location-finder/docs">Cloud Location Finder</a>, an API to find GCP regions and zones based on criteria like cloud provider, proximity, territory, and carbon footprint.</p>
-
-
-    <form class="params">
-      <h2>Optimize for</h2>
-      
-      <div class="weight-group carbon">
-        <details>
-          <summary><label for="carbon">Lower carbon footprint</label> <img src="images/icons/help_outline_black_24dp.svg" class="help" alt="A question mark" width="16" height="16" /></summary>
-          <p class="explanation">
-            Approximated using the yearly carbon free energy percentage and average electricity carbon intensity of the region (<a href="https://cloud.google.com/sustainability/region-carbon">source</a>).
-            <br/>
-            Google <a href="https://cloud.google.com/sustainability">invests</a> in enough renewable energy and carbon offsets to neutralize the global operational carbon emissions footprint of Google Cloud per the GHG protocol under the Scope 2 market-based methodology.
-          </p>
-        </details>
-        <span class="weight-info">Not important</span>
-        <input type="range" id="carbon" name="carbon" min="0" max="10" class="weight">
-        <span class="weight-info">Important</span>
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="brand-wrapper">
+      <img src="images/cloud-logo.svg" alt="Google Cloud" class="brand-logo-img">
+      <div class="brand-divider"></div>
+      <div class="brand-title-group">
+        <h1>CloudRegion <span class="highlight">Advisor</span></h1>
+        <div class="brand-subtitle">Enterprise Multi-Criteria Placement & FinOps Engine</div>
       </div>
-
-      <div class="weight-group price">
-        <details>
-          <summary><label for="price">Lower price</label> <img src="images/icons/help_outline_black_24dp.svg" class="help" alt="A question mark" width="16" height="16"/></summary>
-          <p class="explanation">Approximated using <a href="https://cloud.google.com/compute/all-pricing#e2_machine-types">Google Compute Engine E2 instance vCPU price</a>.</p>
-        </details>
-        <span class="weight-info">Not important</span>
-        <input type="range" id="price" name="price" min="0" max="10" class="weight">
-        <span class="weight-info">Important</span>
-      </div>
-
-      <div class="weight-group latency">
-        <details>
-          <summary><label for="latency" class="weight-title">Lower latency</label> <img src="images/icons/help_outline_black_24dp.svg" class="help" alt="A question mark" width="16" height="16"/></summary>
-          <p class="explanation">
-            Approximated using physical distance between selected countries and the city or country of the region.
-            This isn't indicative of actual user latency on Google's backbone for any Google Cloud product. 
-            For Google Cloud to internet latencies, please use <a href="https://cloud.google.com/network-intelligence-center/docs/performance-dashboard/concepts/overview#traffic-between-google-cloud-and-internet-google-cloud-view">Network Intelligence Center</a> available in the <a href="https://console.cloud.google.com/net-intelligence/performance/global-dashboard/latency">Cloud Console</a>.
-          </p>
-        </details>
-        <span class="weight-info">Not important</span>
-        <input type="range" id="latency" name="latency" min="0" max="10" class="weight">
-        <span class="weight-info">Important</span>
-
-        <div id="locations-group">
-          <label for="locations">Where is your traffic coming from?</label>
-          <select multiple id="locations" name="locations">
-            <option value="--current-location--" selected>Your current location</option>
-          </select>
-        </div>
-
-      </div>
-
-      <div class="weight-group products">
-        <details>
-          <summary><label for="products" class="weight-title">Product availability</label> <img src="images/icons/help_outline_black_24dp.svg" class="help" alt="A question mark" width="16" height="16"/></summary>
-          <p class="explanation">
-            Only regions where selected products are available will be suggested.
-            This list doesn't include <a href="https://cloud.google.com/about/locations#global-products">global products</a>.
-            Product availability is quickly changing, this tool is likely to not reflect the latest availability data.
-            For an official and up to date table of product regional availability, please refer to <a href="https://cloud.google.com/about/locations#regions">the official Google Cloud website</a>.
-          </p>
-        </details>
-        <select multiple id="products" name="products"></select>
-      </div>
-
-    </form>
-  </div>
-</div>
-
-<div class="group regions">
-  <div class="content">
-    <div id="missing-data-warning" hidden>
-      Data missing for <span id="missing-data-regions"></span>
     </div>
-    <h2>Recommended regions</h2>
-    <ol id="results" class="short">
-      <!-- Keep placeholders results to avoid layout shift -->
-      <li></li>
-      <li></li>
-      <li></li>
-      <li></li>
-      <li></li>
-      <li></li>
-      <li></li>
-      <li></li>
-      <li></li>
-      <li></li>
-    </ol>
-    <button id="more">More</button>
-  </div>
-</div>
 
-</main>
+    <div class="header-actions">
+      <div class="status-badge" id="backend-status-badge">
+        <span class="status-pulse"></span>
+        <span id="backend-status-text">Backend Connected</span>
+      </div>
 
-<footer>
-  <span class="links">
-    <a href="https://cloud.google.com/sustainability">Google Cloud sustainability</a>
-  </span>
+      <button class="btn-secondary" id="open-report-btn" title="Export Architecture Decision Record">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Export ADR Report
+      </button>
 
-  <span class="disclaimer">
-    <a href="https://github.com/GoogleCloudPlatform/region-picker">Contribute or report issues</a>
-  </span>
-</footer>
+      <button class="btn-icon" id="share-btn" title="Share Strategy URL">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      </button>
 
-<template id="result-row">
-  <li>
-    <details>
-        <summary class="list-content">
-          <div class="name-group">
-            <img class="flag" alt="flag" width="48" height="48"/>
-            <div>
-              <span class="region region-code"></span>
-              <br/>
-              <span class="name"></span>
-            </div>
+      <button class="btn-icon" id="theme-toggle-btn" title="Toggle Dark/Light Mode">
+        <span id="theme-icon">☀️</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- KPI Benchmarks Ribbon -->
+  <section class="kpi-ribbon">
+    <div class="kpi-card">
+      <div class="kpi-icon eco">🌱</div>
+      <div class="kpi-details">
+        <div class="kpi-label">Greenest Region</div>
+        <div class="kpi-value" id="kpi-greenest-name">Hamina, Finland</div>
+        <div class="kpi-sub" id="kpi-greenest-metric">98% Carbon Free Energy</div>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon cost">💰</div>
+      <div class="kpi-details">
+        <div class="kpi-label">Cost Benchmark Leader</div>
+        <div class="kpi-value" id="kpi-cheapest-name">Iowa, USA</div>
+        <div class="kpi-sub" id="kpi-cheapest-metric">$0.0218 / vCPU-hr (E2)</div>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon perf">⚡</div>
+      <div class="kpi-details">
+        <div class="kpi-label">Lowest Grid Intensity</div>
+        <div class="kpi-value" id="kpi-intensity-name">Montréal, Canada</div>
+        <div class="kpi-sub" id="kpi-intensity-metric">11 gCO2eq/kWh</div>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon stat">📊</div>
+      <div class="kpi-details">
+        <div class="kpi-label">Monitored Cloud Targets</div>
+        <div class="kpi-value" id="kpi-total-regions">40 Global Regions</div>
+        <div class="kpi-sub">56% Global Avg CFE</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Strategy Presets Bar -->
+  <section class="presets-section">
+    <div class="presets-container">
+      <span class="preset-title">Strategy Presets:</span>
+      <button class="preset-btn" data-preset="eco">🌱 Net-Zero Sustainable</button>
+      <button class="preset-btn" data-preset="latency">⚡ Ultra-Low Latency</button>
+      <button class="preset-btn" data-preset="cost">💰 FinOps Budget Saver</button>
+      <button class="preset-btn active" data-preset="balanced">⚖️ Enterprise Balanced</button>
+      <button class="preset-btn" data-preset="reset">🔄 Reset All</button>
+    </div>
+  </section>
+
+  <!-- Main Workspace -->
+  <main class="main-workspace">
+    <!-- Left Column: Controls & Filters -->
+    <div class="controls-column">
+
+      <!-- Panel 1: Criteria Scoring Weights -->
+      <section class="panel-card">
+        <div class="panel-card-header">
+          <div class="panel-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+            Optimization Weights
           </div>
-
-          <div class="symbols-group">
-            <div class="symbols leaves">
-              <img crossorigin="anonymous" referrerpolicy="no-referrer" src="images/icons/gleaf_black_24dp.svg" alt="leaf" width="24" height="24"/>
-              <img crossorigin="anonymous" referrerpolicy="no-referrer" src="images/icons/gleaf_black_24dp.svg" alt="leaf" width="24" height="24"/>
-              <img crossorigin="anonymous" referrerpolicy="no-referrer" src="images/icons/gleaf_black_24dp.svg" alt="leaf" width="24" height="24"/>
-            </div>
-            <div class="symbols dollars">
-              <img crossorigin="anonymous" referrerpolicy="no-referrer" src="images/icons/attach_money-24px.svg" alt="dollar" width="24" height="24"/>
-              <img crossorigin="anonymous" referrerpolicy="no-referrer" src="images/icons/attach_money-24px.svg" alt="dollar" width="24" height="24"/>
-              <img crossorigin="anonymous" referrerpolicy="no-referrer" src="images/icons/attach_money-24px.svg" alt="dollar" width="24" height="24"/>
-            </div>
-          </div>
-        </summary>
-        <div>
-          <ul>
-            <li class="cfe-sentence">Carbon Free Energy: <span class="cfe"></span>%</li>
-            <li>Grid carbon intensity: <span class="gCO2_kWh"></span> gCO2eq/kWh</li>
-            <li>Google Compute Engine price: $<span class="price"></span> / vCPU-hour</li>
-          </ul>
+          <span class="panel-badge">Relative Priority</span>
         </div>
-    </details>
-  </li>
-</template>
 
-<script>
-  // Use inline script because of Content Security Policy
-  var scriptUrl = "index.js";
-  var scriptElement = document.createElement('script');
-  scriptElement.async = false;
-  scriptElement.type = "module";
-  scriptElement.src = scriptUrl;
-  document.body.appendChild(scriptElement);
-</script>
-</body></html>
+        <!-- Carbon Weight -->
+        <div class="weight-control-group">
+          <div class="slider-header">
+            <div class="slider-label-group">
+              <span class="slider-icon">🌱</span>
+              <label for="weight-carbon">Carbon Footprint</label>
+            </div>
+            <span class="slider-weight-value" id="badge-carbon">0.6x</span>
+          </div>
+          <div class="slider-desc">Prioritize Carbon Free Energy (CFE %) & lower grid intensity</div>
+          <input type="range" id="weight-carbon" name="carbon" min="0" max="10" value="6" class="custom-range eco">
+          <div class="slider-ticks">
+            <span>0 (Ignore)</span>
+            <span>Balanced</span>
+            <span>10 (Max)</span>
+          </div>
+        </div>
+
+        <!-- Cost Weight -->
+        <div class="weight-control-group">
+          <div class="slider-header">
+            <div class="slider-label-group">
+              <span class="slider-icon">💰</span>
+              <label for="weight-price">Compute Pricing</label>
+            </div>
+            <span class="slider-weight-value" id="badge-price">0.6x</span>
+          </div>
+          <div class="slider-desc">Prioritize lower hourly cost for Google Compute Engine instances</div>
+          <input type="range" id="weight-price" name="price" min="0" max="10" value="6" class="custom-range cost">
+          <div class="slider-ticks">
+            <span>0 (Ignore)</span>
+            <span>Balanced</span>
+            <span>10 (Max)</span>
+          </div>
+        </div>
+
+        <!-- Latency Weight -->
+        <div class="weight-control-group">
+          <div class="slider-header">
+            <div class="slider-label-group">
+              <span class="slider-icon">⚡</span>
+              <label for="weight-latency">Network Latency</label>
+            </div>
+            <span class="slider-weight-value" id="badge-latency">0.6x</span>
+          </div>
+          <div class="slider-desc">Minimize physical distance & estimated latency to client origins</div>
+          <input type="range" id="weight-latency" name="latency" min="0" max="10" value="6" class="custom-range latency">
+          <div class="slider-ticks">
+            <span>0 (Ignore)</span>
+            <span>Balanced</span>
+            <span>10 (Max)</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel 2: Client Traffic Origins -->
+      <section class="panel-card">
+        <div class="panel-card-header">
+          <div class="panel-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"/><circle cx="12" cy="10" r="3"/></svg>
+            Traffic Origins
+          </div>
+          <span class="panel-badge" id="origins-count-badge">1 Origin</span>
+        </div>
+
+        <div class="geolocation-toggle">
+          <div class="geo-label">
+            <span>📍 Auto-Detect My Location</span>
+          </div>
+          <input type="checkbox" id="toggle-geolocation" checked>
+        </div>
+
+        <!-- Selected country chips -->
+        <div class="selected-chips-container" id="selected-locations-chips">
+          <!-- Populated by JS -->
+        </div>
+
+        <!-- Search input for adding countries -->
+        <div class="location-search-box">
+          <svg class="search-icon-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="location-search-input" class="search-input" placeholder="Add country (e.g. United States, India, Germany)...">
+        </div>
+
+        <!-- Dropdown list of filtered countries -->
+        <div class="location-dropdown-list" id="location-dropdown-results"></div>
+
+        <!-- Quick Hub Buttons -->
+        <div class="hub-shortcuts">
+          <span style="font-size:0.7rem; color:var(--text-muted); margin-right:0.2rem;">Quick Hubs:</span>
+          <button class="hub-btn" data-hub="US">🇺🇸 North America</button>
+          <button class="hub-btn" data-hub="EU">🇪🇺 Europe</button>
+          <button class="hub-btn" data-hub="APAC">🌏 Asia Pacific</button>
+          <button class="hub-btn" data-hub="CLEAR">Clear</button>
+        </div>
+      </section>
+
+      <!-- Panel 3: GCP Product Stack Compliance -->
+      <section class="panel-card">
+        <div class="panel-card-header">
+          <div class="panel-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+            Required GCP Services
+          </div>
+          <span class="panel-badge" id="product-compliance-badge">4 Selected</span>
+        </div>
+
+        <div class="product-quick-stacks">
+          <button class="hub-btn" id="stack-core">Standard Core</button>
+          <button class="hub-btn" id="stack-ai">AI / ML Stack</button>
+          <button class="hub-btn" id="stack-data">Data Platform</button>
+          <button class="hub-btn" id="stack-all">Select All</button>
+          <button class="hub-btn" id="stack-clear">Clear</button>
+        </div>
+
+        <div class="location-search-box">
+          <svg class="search-icon-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="product-search-input" class="search-input" placeholder="Filter 112 services (e.g. BigQuery, GKE, Spanner)...">
+        </div>
+
+        <div class="product-list-container" id="product-checkbox-list">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+    </div>
+
+    <!-- Right Column: Recommendations & Analytics -->
+    <div class="results-column">
+
+      <!-- Hero Spotlight: Top Ranked Region -->
+      <section class="spotlight-card" id="top-spotlight">
+        <div class="spotlight-left">
+          <div class="spotlight-flag-wrapper">
+            <img src="images/icons/location_on-24px.svg" alt="Flag" class="spotlight-flag" id="spotlight-flag">
+            <div class="spotlight-rank-crown">#1</div>
+          </div>
+          <div class="spotlight-info">
+            <div class="spotlight-tag">Primary Architectural Recommendation</div>
+            <div class="spotlight-region-id" id="spotlight-region-id">europe-north1</div>
+            <div class="spotlight-location-name" id="spotlight-location-name">Hamina, Finland</div>
+            <div class="spotlight-pills">
+              <span class="spotlight-pill green" id="spotlight-eco-pill">🌱 98% Carbon Free</span>
+              <span class="spotlight-pill purple" id="spotlight-cost-pill">💰 $0.0240 / hr</span>
+              <span class="spotlight-pill blue" id="spotlight-latency-pill">⚡ Proximity Proxy</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="spotlight-score-block">
+          <div class="spotlight-score-num" id="spotlight-score-num">98.2</div>
+          <div class="spotlight-score-label">Match Score</div>
+        </div>
+      </section>
+
+      <!-- View Mode Tabs Bar -->
+      <div class="view-mode-bar">
+        <div class="view-tabs">
+          <button class="tab-btn active" data-tab="cards">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Ranked Cards
+          </button>
+          <button class="tab-btn" data-tab="matrix">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            Comparison Matrix
+          </button>
+          <button class="tab-btn" data-tab="analytics">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+            FinOps & Carbon Analytics
+          </button>
+        </div>
+        <div class="results-count-badge" id="eligible-regions-count">Showing top 10 recommended regions</div>
+      </div>
+
+      <!-- Tab Content 1: Cards View -->
+      <section class="tab-content" id="tab-cards">
+        <div class="region-cards-list" id="results-cards-container">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+
+      <!-- Tab Content 2: Comparison Matrix Table -->
+      <section class="tab-content" id="tab-matrix" style="display: none;">
+        <div class="table-wrapper">
+          <table class="matrix-table">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Region ID</th>
+                <th>Location</th>
+                <th>Overall Match</th>
+                <th>Carbon Free (CFE)</th>
+                <th>Grid Intensity</th>
+                <th>Hourly Compute</th>
+                <th>Distance Proxy</th>
+              </tr>
+            </thead>
+            <tbody id="matrix-table-body">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Tab Content 3: Analytics View -->
+      <section class="tab-content" id="tab-analytics" style="display: none;">
+        <div class="analytics-grid">
+          <div class="chart-card">
+            <div class="chart-title">🌱 Carbon Free Energy % (Top Regions)</div>
+            <div class="bar-chart-container" id="chart-carbon-bars">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-title">💰 Hourly Compute Pricing ($/hr)</div>
+            <div class="bar-chart-container" id="chart-cost-bars">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- ADR Report Export Modal -->
+  <div class="modal-overlay" id="report-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Architecture Decision Record (ADR)
+        </div>
+        <button class="modal-close-btn" id="modal-close-btn">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <pre id="report-preview-text">Generating architecture report...</pre>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" id="copy-report-btn">
+          📋 Copy Markdown
+        </button>
+        <button class="btn-primary" id="download-report-btn">
+          💾 Download Report (.md)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- App Footer -->
+  <footer class="app-footer">
+    <div>
+      Google Cloud Region Advisor &bull; Telemetry Engine v2.5
+    </div>
+    <div class="footer-links">
+      <a href="https://cloud.google.com/sustainability" target="_blank" rel="noopener">Google Cloud Sustainability</a>
+      <a href="https://cloud.google.com/compute/all-pricing" target="_blank" rel="noopener">Compute Engine Pricing</a>
+      <a href="https://cloud.google.com/about/locations" target="_blank" rel="noopener">Global Network Locations</a>
+    </div>
+  </footer>
+
+  <script type="module" src="index.js"></script>
+</body>
+</html>
